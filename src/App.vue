@@ -11,7 +11,7 @@
       <el-button @click="leave" :disabled="!isConnected||!isJoined">Leave</el-button>
     </div>
     <div class="message-panel">
-      <msgBox v-for="(item, index) of msgList" :key="index+Math.random()" :uname="item.name" :content="item.msg" :isself="item.isSelf"></msgBox>
+      <msgBox v-for="(item, index) of msgList" :key="index+Math.random()" :uname="item.name" :content="item.msg" :isself="item.isSelf" :isFromSystem="item.isFromSystem"></msgBox>
     </div>
     <div>
       <el-input :disabled="!isConnected||!isJoined" class="content" v-model="content" placeholder="Type something : " />
@@ -53,6 +53,8 @@ export default {
     },
     disconnect(){
       if (this.websocket){
+        // before disconnect, it should be leave the room first.
+        this.leave();
         this.websocket.close();
         this.websocket = null;
       }
@@ -67,11 +69,11 @@ export default {
         this.isJoined = true;
 
         const joinMessage = {
-          ClientId: "",
+          ClientId: this.clientId,
           Action: "Join",
           RoomId: this.room,
           NickName: this.name,
-          Content: ""
+          Content: this.content
         }
         this.sendMessageToServer(joinMessage);
       }else{
@@ -79,14 +81,27 @@ export default {
       }
     },
     leave(){
-      // unlock the name and room input
-      this.msgList = [];
+      const leaveMessage = {
+        ClientId: this.clientId,
+        Action: "Leave",
+        RoomId: this.room,
+        NickName: this.name,
+        Content: this.content
+      }
+      this.sendMessageToServer(leaveMessage);
       this.isJoined = false;
     },
     send(){
       // send the message to server
       if (this.content){
-        this.msgList.push({name:this.name, msg:this.content, isSelf:true});
+        const broadcastMessage = {
+          ClientId: this.clientId,
+          Action: "Broadcast",
+          RoomId: this.room,
+          NickName: this.name,
+          Content: this.content
+        }
+        this.sendMessageToServer(broadcastMessage);
         this.content = "";
       }else{
         alert("You can't send empty content.");
@@ -103,6 +118,13 @@ export default {
     onWsMessage(e){
       const resdata = JSON.parse(e.data);
       console.log(resdata);
+      this.clientId = resdata.ClientId;
+      this.msgList.push({
+        name: resdata.From,
+        msg: resdata.Content,
+        isFromSystem: resdata.IsFromSystem,
+        isSelf: resdata.FromId == this.clientId
+      })
     },
     onWsError(){
       alert("Connect failed. Please check the websocket server.");

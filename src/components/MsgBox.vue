@@ -1,10 +1,9 @@
 <template>
 
-    <div class="msg-wrapper" v-bind:class="{ self: isself }">
-        <span class="uname">{{uname}}</span>
-        <span>：</span>
+    <div class="msg-wrapper" v-bind:class="getClass()">
+        <span v-if="!isFromSystem && !isself" class="uname">{{uname}}</span>
+        <span v-if="!isFromSystem && !isself">：</span>
         <div class="content">{{content}}</div>
-       
     </div>
  
 </template>
@@ -13,22 +12,18 @@
 export default {
   name: 'msgBox',
   props: {
+    isFromSystem: Boolean,
     uname: String,
     content: String,
     isself: Boolean
   },
-  data() {
-    return {
-      userName: '',
-      msg: '',
-      msgList: [],
-    }
-  },
-  mounted() {
-  },
-  methods: {
-        
-    }
+  methods:{
+      getClass(){
+          if (this.isFromSystem) return "system";
+          if (this.isself) return "self";
+          return "";
+      }
+  }
 }
 </script>
 
@@ -41,12 +36,17 @@ export default {
     padding: 10px;
 }
 .content {
-    border: 1px solid #555;
     border-radius: 2px;
-    padding: 3px;
+    margin-left: 1%;
+    margin-right: 1%;
 }
 .self {
     flex-direction: row-reverse;
+}
+
+.system{
+    color: gray;
+    justify-content: center
 }
   
 </style>    
