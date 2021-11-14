@@ -64,6 +64,7 @@
 </template>
 
 <script>
+import config from "../public/config"
 import msgBox from "../src/components/MsgBox.vue";
 export default {
   name: "App",
@@ -76,7 +77,7 @@ export default {
       isConnected: false,
       isJoined: false,
       clientId: "",
-      content: "",
+      content: ""
     };
   },
   components: {
@@ -85,7 +86,7 @@ export default {
   },
   methods: {
     connect() {
-      const wsurl = "ws://localhost:8080/websocket";
+      const wsurl = config.WS_SERVER;
       this.websocket = new WebSocket(wsurl);
       this.websocket.onopen = this.onWsOpen;
       this.websocket.onerror = this.onWsError;
@@ -95,9 +96,14 @@ export default {
     disconnect() {
       if (this.websocket) {
         // before disconnect, it should be leave the room first.
-        this.leave();
+        if (this.isJoined){
+          console.log(this.isJoined)
+          this.leave();
+        }
         this.websocket.close();
         this.websocket = null;
+        this.isConnected = false;
+        this.isJoined = false;
       }
     },
     join() {
